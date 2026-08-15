@@ -93,6 +93,7 @@ func main() {
 		config.CLIConfig.Proxy.DownloadMinSize,
 		config.CLIConfig.Proxy.CheckMethod,
 		config.CLIConfig.Proxy.CheckConcurrency,
+		config.CLIConfig.Proxy.FailureThreshold,
 	)
 	if config.CLIConfig.Telegram.BotToken != "" {
 		proxyChecker.SetStatusChangeHandler(
