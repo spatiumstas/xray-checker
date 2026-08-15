@@ -118,7 +118,7 @@ func statusValue(t *testing.T, c prometheus.Collector, stableID string) (float64
 func TestUpdateProxiesNoBlinkAndReflectsCurrentSet(t *testing.T) {
 	a := mkProxy("1.1.1.1", "A", "ida")
 	b := mkProxy("2.2.2.2", "B", "idb")
-	pc := NewProxyChecker([]*models.ProxyConfig{a, b}, 10000, "", 5, "", "", 5, 1, "ip", 0)
+	pc := NewProxyChecker([]*models.ProxyConfig{a, b}, 10000, "", 5, "", "", 5, 1, "ip", 0, 1)
 	collector := metrics.NewCollector("", pc)
 
 	// Initial check populated A and B.
@@ -162,7 +162,7 @@ func TestUpdateProxiesNoBlinkAndReflectsCurrentSet(t *testing.T) {
 
 func TestGetProxyResultLastCheck(t *testing.T) {
 	a := mkProxy("1.1.1.1", "A", "ida")
-	pc := NewProxyChecker([]*models.ProxyConfig{a}, 10000, "", 5, "", "", 5, 1, "ip", 0)
+	pc := NewProxyChecker([]*models.ProxyConfig{a}, 10000, "", 5, "", "", 5, 1, "ip", 0, 1)
 
 	// No result yet: not found, lastCheck 0.
 	if _, _, lc, found := pc.GetProxyResultByStableID("ida"); found || lc != 0 {
@@ -180,12 +180,23 @@ func TestGetProxyResultLastCheck(t *testing.T) {
 	}
 }
 
+func TestFailureThresholdDefaultsToOne(t *testing.T) {
+	pc := NewProxyChecker(nil, 10000, "", 5, "", "", 5, 1, "status", 0, 0)
+	if pc.failureThreshold != 1 {
+		t.Fatalf("default failure threshold = %d, want 1", pc.failureThreshold)
+	}
+	pc = NewProxyChecker(nil, 10000, "", 5, "", "", 5, 1, "status", 0, 3)
+	if pc.failureThreshold != 3 {
+		t.Fatalf("configured threshold = %d, want 3", pc.failureThreshold)
+	}
+}
+
 // Regression for #172: two proxies with the SAME name but different stable_id must
 // resolve to their own result by stable_id, not to the first same-named proxy's.
 func TestGetProxyResultByStableID_DuplicateNames(t *testing.T) {
 	up := &models.ProxyConfig{Protocol: "socks", Server: "1.1.1.1", Port: 1080, Name: "Dup", StableID: "id-up"}
 	down := &models.ProxyConfig{Protocol: "socks", Server: "2.2.2.2", Port: 1080, Name: "Dup", StableID: "id-down"}
-	pc := NewProxyChecker([]*models.ProxyConfig{up, down}, 10000, "", 5, "", "", 5, 1, "status", 0)
+	pc := NewProxyChecker([]*models.ProxyConfig{up, down}, 10000, "", 5, "", "", 5, 1, "status", 0, 1)
 
 	// up is healthy, down failed — same name, different stable_id.
 	pc.results.Store(proxyMetricKey(up), proxyResult{status: true, latency: 100 * time.Millisecond, lastCheck: time.Now()})

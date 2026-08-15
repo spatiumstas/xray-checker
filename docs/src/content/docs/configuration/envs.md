@@ -89,6 +89,17 @@ Maximum number of proxies checked in parallel within one cycle. `0` (the default
 
 With a limit, a cycle's worst case is roughly `⌈N / concurrency⌉ × PROXY_TIMEOUT` (N = number of proxies), so keep `PROXY_CHECK_INTERVAL` at least that large. If a cycle overruns the interval it is logged as a warning and the next scheduled cycle is skipped — checks simply run less often rather than overlapping.
 
+### PROXY_FAILURE_THRESHOLD
+
+- CLI: `--proxy-failure-threshold`
+- Required: No
+- Default: `1`
+
+Number of failed attempts in one check cycle required before a proxy is marked down.
+For example, set `PROXY_FAILURE_THRESHOLD=3` to retry twice after the first failed
+attempt, waiting five seconds between attempts. The default (`1`) keeps the
+original one-attempt behavior.
+
 ### PROXY_CHECK_METHOD
 
 - CLI: `--proxy-check-method`
